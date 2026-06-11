@@ -1,24 +1,33 @@
+# dashboard_complete.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import json
-from pathlib import Path
+import requests
+from io import BytesIO
 
 st.set_page_config(page_title="NYC Taxi Dashboard 2025 - Complete", layout="wide")
 
+GITHUB_BASE = "https://raw.githubusercontent.com/hessamasadi/nyc-taxi-dashboard-2025/main/"
+
 @st.cache_data
 def load_all_data():
-    df = pd.read_parquet(r"C:\Users\HessaM\Desktop\nyc_taxi_dashboard\aggregated\all_2025_cleaned.parquet")
+    parquet_url = GITHUB_BASE + "all_2025_cleaned.parquet"
+    response = requests.get(parquet_url)
+    response.raise_for_status()
+    df = pd.read_parquet(BytesIO(response.content))
     
-    zone_lookup = pd.read_csv(r"C:\Users\HessaM\Desktop\dataset\taxi_zone_lookup.csv")
+    zone_url = GITHUB_BASE + "taxi_zone_lookup.csv"
+    zone_lookup = pd.read_csv(zone_url)
     zone_lookup = zone_lookup[['LocationID', 'Zone', 'Borough']]
     
     df = df.merge(zone_lookup, left_on='PULocationID', right_on='LocationID', how='left')
     
-    geojson_path = Path(r"C:\Users\HessaM\Desktop\dataset\nyc_taxi_zones.geojson")
-    with open(geojson_path, 'r') as f:
-        geojson = json.load(f)
+    geojson_url = GITHUB_BASE + "nyc_taxi_zones.geojson"
+    response = requests.get(geojson_url)
+    response.raise_for_status()
+    geojson = response.json()
     
     day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     df['day_name'] = df['day_of_week'].map(lambda x: day_names[x])
@@ -42,6 +51,7 @@ selected_hour_range = st.sidebar.slider(
     value=(6, 20),
     help="Filter trips by pickup hour"
 )
+
 borough_options = sorted([b for b in df['Borough'].dropna().unique() if b != 'Unknown'])
 
 selected_boroughs = st.sidebar.multiselect(
@@ -73,11 +83,12 @@ zone_agg = filtered.groupby('PULocationID').agg({
     'total_fare': 'sum',
     'total_tip': 'sum',
     'total_congestion_fee': 'sum',
-    'avg_fare': 'mean',
-    'avg_tip': 'mean',
     'Zone': 'first',
     'Borough': 'first'
 }).reset_index()
+
+zone_agg['avg_fare'] = zone_agg['total_fare'] / zone_agg['trip_count']
+zone_agg['avg_tip'] = zone_agg['total_tip'] / zone_agg['trip_count']
 
 zone_agg = zone_agg[zone_agg['trip_count'] >= min_trips]
 
@@ -89,10 +100,10 @@ with col1:
     total_trips = filtered['trip_count'].sum()
     st.metric("🚕 Total Trips", f"{total_trips:,.0f}")
 with col2:
-    avg_fare = filtered['avg_fare'].mean()
+    avg_fare = (filtered['total_fare'].sum() / filtered['trip_count'].sum()) if filtered['trip_count'].sum() > 0 else 0
     st.metric("💰 Avg Fare", f"${avg_fare:.2f}")
 with col3:
-    avg_tip = filtered['avg_tip'].mean()
+    avg_tip = (filtered['total_tip'].sum() / filtered['trip_count'].sum()) if filtered['trip_count'].sum() > 0 else 0
     st.metric("💵 Avg Tip", f"${avg_tip:.2f}")
 with col4:
     tip_pct = (avg_tip / avg_fare * 100) if avg_fare > 0 else 0
@@ -237,7 +248,6 @@ with col_monthly:
     st.subheader("📈 Monthly Trends 2025")
     monthly = filtered.groupby('month').agg({
         'trip_count': 'sum',
-        'avg_fare': 'mean',
         'total_congestion_fee': 'sum'
     }).reset_index()
     
