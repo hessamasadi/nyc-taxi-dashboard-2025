@@ -26,7 +26,7 @@ def load_all_data():
         how='left'
     )
 
-    with open("nyc_taxi_zones.geojson") as f:
+    with open("NYC_Taxi_Zones.geojson") as f:
         geojson = json.load(f)
 
     day_names = [
