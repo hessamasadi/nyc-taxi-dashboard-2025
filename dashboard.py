@@ -7,9 +7,9 @@ import json
 import requests
 from io import BytesIO
 
-st.set_page_config(page_title="NYC Taxi Dashboard 2025 - Complete", layout="wide")
+st.set_page_config(page_title="NYC Taxi Dashboard 2025", layout="wide")
 
-GITHUB_BASE = "https://raw.githubusercontent.com/hessamasadi/nyc-taxi-dashboard-2025/main/"
+GITHUB_BASE = "https://github.com/hessamasadi/nyc-taxi-dashboard-2025/blob/main/"
 
 @st.cache_data
 def load_all_data():
