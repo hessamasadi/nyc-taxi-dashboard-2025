@@ -9,31 +9,35 @@ from io import BytesIO
 
 st.set_page_config(page_title="NYC Taxi Dashboard 2025", layout="wide")
 
-GITHUB_BASE = "https://github.com/hessamasadi/nyc-taxi-dashboard-2025/blob/main/"
+GITHUB_BASE = "https://raw.githubusercontent.com/hessamasadi/nyc-taxi-dashboard-2025/main/"
 
 @st.cache_data
 def load_all_data():
-    parquet_url = GITHUB_BASE + "all_2025_cleaned.parquet"
-    response = requests.get(parquet_url)
-    response.raise_for_status()
-    df = pd.read_parquet(BytesIO(response.content))
-    
-    zone_url = GITHUB_BASE + "taxi_zone_lookup.csv"
-    zone_lookup = pd.read_csv(zone_url)
-    zone_lookup = zone_lookup[['LocationID', 'Zone', 'Borough']]
-    
-    df = df.merge(zone_lookup, left_on='PULocationID', right_on='LocationID', how='left')
-    
-    geojson_url = GITHUB_BASE + "nyc_taxi_zones.geojson"
-    response = requests.get(geojson_url)
-    response.raise_for_status()
-    geojson = response.json()
-    
-    day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    df['day_name'] = df['day_of_week'].map(lambda x: day_names[x])
-    
-    return df, geojson, zone_lookup
 
+    df = pd.read_parquet("all_2025_cleaned.parquet")
+
+    zone_lookup = pd.read_csv("taxi_zone_lookup.csv")
+    zone_lookup = zone_lookup[['LocationID', 'Zone', 'Borough']]
+
+    df = df.merge(
+        zone_lookup,
+        left_on='PULocationID',
+        right_on='LocationID',
+        how='left'
+    )
+
+    with open("nyc_taxi_zones.geojson") as f:
+        geojson = json.load(f)
+
+    day_names = [
+        'Monday','Tuesday','Wednesday',
+        'Thursday','Friday','Saturday','Sunday'
+    ]
+
+    df['day_name'] = df['day_of_week'].map(lambda x: day_names[x])
+
+    return df, geojson, zone_lookup
+    
 df, geojson, zone_lookup = load_all_data()
 
 st.sidebar.header("🎛️ Dashboard Controls")
