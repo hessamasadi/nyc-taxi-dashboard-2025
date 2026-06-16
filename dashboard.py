@@ -40,7 +40,7 @@ def load_all_data():
     
 df, geojson, zone_lookup = load_all_data()
 
-st.sidebar.header("🎛️ Dashboard Controls")
+st.sidebar.header("Dashboard Controls")
 
 selected_months = st.sidebar.multiselect(
     "Select Months",
@@ -102,26 +102,26 @@ st.markdown("---")
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     total_trips = filtered['trip_count'].sum()
-    st.metric("🚕 Total Trips", f"{total_trips:,.0f}")
+    st.metric("Total Trips", f"{total_trips:,.0f}")
 with col2:
     avg_fare = (filtered['total_fare'].sum() / filtered['trip_count'].sum()) if filtered['trip_count'].sum() > 0 else 0
-    st.metric("💰 Avg Fare", f"${avg_fare:.2f}")
+    st.metric("Avg Fare", f"${avg_fare:.2f}")
 with col3:
     avg_tip = (filtered['total_tip'].sum() / filtered['trip_count'].sum()) if filtered['trip_count'].sum() > 0 else 0
-    st.metric("💵 Avg Tip", f"${avg_tip:.2f}")
+    st.metric("Avg Tip", f"${avg_tip:.2f}")
 with col4:
     tip_pct = (avg_tip / avg_fare * 100) if avg_fare > 0 else 0
-    st.metric("📊 Tip %", f"{tip_pct:.1f}%")
+    st.metric("Tip %", f"{tip_pct:.1f}%")
 with col5:
     congestion_total = filtered['total_congestion_fee'].sum()
-    st.metric("🏙️ Congestion Fees", f"${congestion_total:,.0f}")
+    st.metric("Congestion Fees", f"${congestion_total:,.0f}")
 
 st.markdown("---")
 
 col_map, col_stats = st.columns([2.5, 1])
 
 with col_map:
-    st.subheader("🗺️ Trip Volume by Taxi Zone")
+    st.subheader("Trip Volume by Taxi Zone")
     
     color_metric = st.radio(
         "Color map by:",
@@ -170,7 +170,7 @@ with col_map:
     st.plotly_chart(fig, use_container_width=True)
 
 with col_stats:
-    st.subheader("📊 Borough Statistics")
+    st.subheader("Borough Statistics")
     
     borough_stats = zone_agg.groupby('Borough').agg({
         'trip_count': 'sum',
@@ -191,7 +191,7 @@ with col_stats:
         use_container_width=True
     )
     
-    st.subheader("🏆 Top 5 Zones")
+    st.subheader("Top 5 Zones")
     top_zones = zone_agg.nlargest(5, 'trip_count')[['Zone', 'trip_count', 'avg_fare']]
     for idx, row in top_zones.iterrows():
         st.metric(
@@ -205,7 +205,7 @@ st.markdown("---")
 col_hour, col_day = st.columns(2)
 
 with col_hour:
-    st.subheader("⏰ Hourly Trip Distribution")
+    st.subheader("Hourly Trip Distribution")
     hourly = filtered.groupby('hour')['trip_count'].sum().reset_index()
     fig = px.bar(hourly, x='hour', y='trip_count', 
                  title="Trips by Hour of Day",
@@ -216,7 +216,7 @@ with col_hour:
     st.plotly_chart(fig, use_container_width=True)
 
 with col_day:
-    st.subheader("📅 Weekly Pattern")
+    st.subheader("Weekly Pattern")
     daily = filtered.groupby('day_name')['trip_count'].sum().reset_index()
     day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     daily['day_name'] = pd.Categorical(daily['day_name'], categories=day_order, ordered=True)
@@ -232,7 +232,7 @@ st.markdown("---")
 col_congestion, col_monthly = st.columns(2)
 
 with col_congestion:
-    st.subheader("🏙️ Congestion Pricing Impact")
+    st.subheader("Congestion Pricing Impact")
     
     fee_hour = filtered.groupby('hour')['total_congestion_fee'].sum().reset_index()
     fig = px.area(fee_hour, x='hour', y='total_congestion_fee',
@@ -249,7 +249,7 @@ with col_congestion:
     st.plotly_chart(fig, use_container_width=True)
 
 with col_monthly:
-    st.subheader("📈 Monthly Trends 2025")
+    st.subheader("Monthly Trends 2025")
     monthly = filtered.groupby('month').agg({
         'trip_count': 'sum',
         'total_congestion_fee': 'sum'
@@ -274,7 +274,7 @@ with col_monthly:
 
 st.markdown("---")
 
-st.subheader("💰 Fare Analysis by Zone")
+st.subheader("Fare Analysis by Zone")
 col_fare1, col_fare2 = st.columns(2)
 
 with col_fare1:
@@ -295,5 +295,5 @@ with col_fare2:
     st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
-st.caption("📊 Data source: NYC TLC Yellow Taxi Trip Records 2025 | Dashboard shows aggregated zone-hour data")
-st.caption(f"🗺️ Total zones shown: {len(zone_agg)} | Total trips in filtered period: {total_trips:,}")
+st.caption("Data source: NYC TLC Yellow Taxi Trip Records 2025 | Dashboard shows aggregated zone-hour data")
+st.caption(f"Total zones shown: {len(zone_agg)} | Total trips in filtered period: {total_trips:,}")
